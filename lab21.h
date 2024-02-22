@@ -4,6 +4,7 @@
 #include<cstdlib>
 #include<vector>
 #include<iomanip>
+#include<cmath>
 
 using namespace std;
 
@@ -13,8 +14,18 @@ class Equipment{
 	int def;
 	public:
 		Equipment(int,int,int);
-		vector<int> getStat();			
+		vector<int> getStat();	
 };
+
+Equipment::Equipment(int hpmax,int atk ,int def){
+	this->hpmax = hpmax;
+	this->atk = atk;
+	this->def = def;
+}
+vector<int> Equipment::getStat(){
+	vector<int> stat = {hpmax,atk,def};
+	return stat;
+}
 
 class Unit{
 		string name;
@@ -40,6 +51,14 @@ class Unit{
 		void equip(Equipment *);  
 };
 
+int Unit::ultimateAttack(Unit &opp){
+	return opp.beAttacked(atk*2);
+}
+
+void Unit::dodge(){
+	dodge_on = true;
+}
+
 Unit::Unit(string t,string n){ 
 	type = t;
 	name = n;
@@ -53,9 +72,13 @@ Unit::Unit(string t,string n){
 		def = rand()%3+5;
 	}
 	hp = hpmax;	
+	dodge_on = false;
 	guard_on = false;
 	equipment = NULL;
 }
+
+
+
 
 void Unit::showStatus(){
 	if(type == "Hero"){
@@ -73,7 +96,8 @@ void Unit::showStatus(){
 }
 
 void Unit::newTurn(){
-	guard_on = false; 
+	guard_on = false;
+	dodge_on = false;
 }
 
 int Unit::beAttacked(int oppatk){
@@ -81,10 +105,23 @@ int Unit::beAttacked(int oppatk){
 	if(oppatk > def){
 		dmg = oppatk-def;	
 		if(guard_on) dmg = dmg/3;
-	}	
-	hp -= dmg;
+	}
+
+	if(!dodge_on){	
+		hp -= dmg;
+	}
+	else{
+		int temp = rand()%2;
+		if(temp == 1){
+			hp -= 0;
+			return 0;
+		}
+		else{
+			hp -= dmg*2;
+			return dmg*2;
+		}
+	}
 	if(hp <= 0){hp = 0;}
-	
 	return dmg;	
 }
 
@@ -106,6 +143,23 @@ void Unit::guard(){
 bool Unit::isDead(){
 	if(hp <= 0) return true;
 	else return false;
+}
+
+void Unit::equip(Equipment * eq){
+	vector<int> stat = eq->getStat();
+	if(equipment != nullptr){
+		vector<int> preveq = equipment->getStat();
+		hpmax = (hpmax -preveq[0]);
+		atk = (atk -preveq[1]);
+		def = (def -preveq[2]);
+	}
+	this->equipment = eq;
+	hpmax += stat[0];
+	atk += stat[1];
+	def += stat[2];
+	if(hp > hpmax){
+		hp = hpmax;
+	}
 }
 
 void drawScene(char p_action,int p,char m_action,int m){
